@@ -33,7 +33,7 @@ def main():
 		top100_10=extract_info(html)  #get wanted information in one page
 		print(page)
 		for row in top100_10:  #save  wanted information from every page
-			row_new='{:<20}{:<30}{:>}'.format(row[0], row[1], row[2])+'\n'
+			row_new='{}{:<30}{:>}'.format(row[0]+' '*(30-2*len(row[0])), row[1], row[2])+'\n'
 			top100+=row_new
 	with open('top100.txt','w') as f:  #save  data in file
 		f.write(top100)
