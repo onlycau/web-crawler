@@ -55,7 +55,7 @@ class Net(object):
 
         url = 'http://music.163.com/api/v1/resource/comments/R_SO_4_' + song_id
         try:
-            proxies=choice(self.proxies)
+            proxies = choice(self.proxies)
             r = requests.get(url, headers=self.headers, proxies=proxies, params=params, timeout=1)
             if r.status_code == 200:
                 return r.text
@@ -70,22 +70,25 @@ class Net(object):
                         return r.text
 
     def get_ip(self):
-        url = "http://www.xicidaili.com/nn"
-        r = requests.get(url,headers=self.headers)
+
+        pros = []
+        url_0 = "http://www.xicidaili.com/nn/"
+        url = url_0 + str(choice(range(1, 30)))
+        r = requests.get(url, headers=self.headers)
         soup = bs4.BeautifulSoup(r.text, 'html.parser')
         data = soup.table.find_all("td")
-        ip_compile = re.compile(r'<td>(\d+\.\d+\.\d+\.\d+)</td>')    # 匹配IP
-        port_compile = re.compile(r'<td>(\d+)</td>')                # 匹配端口
+        ip_compile = re.compile(r'<td>(\d+\.\d+\.\d+\.\d+)</td>')  # Match IP
+        port_compile = re.compile(r'<td>(\d+)</td>')  # Match port
         https_compile = re.compile(r'<td>(HTTP\w*)</td>')
-        ip = re.findall(ip_compile, str(data))       # 获取所有IP
-        port = re.findall(port_compile, str(data))   # 获取所有端口
-        way = re.findall(https_compile,str(data))
+        ip = re.findall(ip_compile, str(data))  # Get all IP
+        port = re.findall(port_compile, str(data))  # Get all port
+        way = re.findall(https_compile, str(data))
         ip = [":".join(i) for i in zip(ip, port)]
-        pros = []
         for i in range(len(way)):
             pro = {way[i]: ip[i]}
             pros.append(pro)
         return pros
+
 
 class Mysql(object):
 
@@ -150,10 +153,9 @@ class Logic(object):
     def __init__(self, mysql):
         self.mysql = mysql
 
-    def crawl_one(self, song_id):
+    def crawl_one(self, song_id, net):
 
-        print(song_id)
-        net = Net()
+        print('song_%d start...' % song_id)
         conn = self.mysql.conn()
         data = {
             'limit': 100,
@@ -164,14 +166,13 @@ class Logic(object):
         text = net.get_data(str(song_id), data)
         offset = 0
         total = int(json.loads(text).get('total'))
-        print(total)
         while offset < total:
             data['offset'] = offset
-            print(song_id, offset)
             text = net.get_data(str(song_id), data)
             self.mysql.save_comments(text, conn, song_id)
             offset += data.get('limit')
         conn.close()
+        print('song_%d end...' % song_id)
 
     def get_song_id(self):
         playlist_urls = Net().get_playlist('78443113')
@@ -184,10 +185,11 @@ class Logic(object):
                 song_id_list.append(song_id.group(1))
         return song_id_list
 
-    def create_thread(self, song_id):
+    def mession(self, id_list):
 
-        t = Thread(target=self.crawl_one, args=(song_id,))
-        t.start()
+        net = Net()
+        for song_id in id_list:
+            self.crawl_one(int(song_id), net)
 
 
 def main(user_id):
@@ -196,12 +198,17 @@ def main(user_id):
     logic = Logic(mysql)
     conn = mysql.conn()
     cursor = conn.cursor()
-    sql = 'select song_id from playlist_78443113'
+    sql = 'select song_id from playlist_7777'
     cursor.execute(sql)
     song_id_list = cursor.fetchall()
-    for i in range(10):
-        logic.create_thread(int(song_id_list[i][0]))
+    for a in range(10):
+        id_list = []
+        for b in range(len(song_id_list) // 10 * a, len(song_id_list) // 10 * (a + 1)):
+            id_list.append(song_id_list[b][0])
+        t = Thread(target=logic.mession, args=(id_list,))
+        t.start()
+        time.sleep(2)
 
 
 if __name__ == '__main__':
-    main('78443113')
+    main('7777')
