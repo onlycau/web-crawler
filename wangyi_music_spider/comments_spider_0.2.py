@@ -20,15 +20,15 @@ cursor = db.cursor()
 def get_data(song_id, data):
 
         url = api_address + song_id
-        try :
+        try:
             r = requests.get(url, headers=headers, params=data, timeout=1)
             if r.status_code == 200:
                 return r.text
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+        except(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             global NETWORK_STATUS
-            NETWORK_STATUS = False # 请求超时改变状态
+            NETWORK_STATUS = False  # 请求超时改变状态
 
-            if NETWORK_STATUS == False:
+            if NETWORK_STATUS is False:
                 for i in range(1, 10):
                     print('请求超时，第%d次重复请求: ' % i)
                     r = requests.get(url, headers=headers, params=data, timeout=1)

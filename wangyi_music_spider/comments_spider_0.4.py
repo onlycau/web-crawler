@@ -13,6 +13,8 @@ import bs4
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+global thread_id
+thread_id = 0
 
 class Net(object):
 
@@ -59,11 +61,11 @@ class Net(object):
             r = requests.get(url, headers=self.headers, proxies=proxies, params=params, timeout=1)
             if r.status_code == 200:
                 return r.text
-        except(requests.exceptions.Timeout, requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
+        except(requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, ConnectionError):
             NETWORK_STATUS = False
             if NETWORK_STATUS is False:
-                for i in range(1, 10):
-                    print('请求超时，第%d次重复请求: ' % i)
+                for c in range(1, 10):
+                    print('请求超时，第%d次重复请求: ' % c)
                     proxies = choice(self.proxies)
                     r = requests.get(url, headers=self.headers, proxies=proxies, params=params, timeout=1)
                     if r.status_code == 200:
@@ -107,7 +109,9 @@ class Mysql(object):
     def create_song_table(self, song_id, conn):
 
         table_name = 'song_' + song_id
-        sql = 'create table if not exists %s(`comment_id` int UNSIGNED AUTO_INCREMENT,`song_name` VARCHAR(20) ,`user_id`   varchar(100) ,`user_name` VARCHAR(100) ,`avatar_url` VARCHAR(100) ,`user_comment`   varchar(400) ,`like_count`  int(10) default 0,`be_replied`     int default 0,`reply_user_id` int(10)   default 0,`reply_user_name` varchar(100)   ,`reply_comment` VARCHAR(400) ,`is_hot_comment` int default 0,primary key (`comment_id`))ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;' % table_name
+        sql = 'drop table if exists %s;' % table_name
+        conn.cursor().execute(sql)
+        sql = ' create table if not exists %s(`comment_id` int UNSIGNED AUTO_INCREMENT,`song_name` VARCHAR(20) ,`user_id`   varchar(100) ,`user_name` VARCHAR(100) ,`avatar_url` VARCHAR(100) ,`user_comment`   varchar(400) ,`like_count`  int(10) default 0,`be_replied`     int default 0,`reply_user_id` int(10)   default 0,`reply_user_name` varchar(100)   ,`reply_comment` VARCHAR(400) ,`is_hot_comment` int default 0,primary key (`comment_id`))ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;' % table_name
         conn.cursor().execute(sql)
         conn.commit()
 
@@ -187,8 +191,11 @@ class Logic(object):
 
     def mession(self, id_list):
 
+        global thread_id
+        thread_id += 1
         net = Net()
         for song_id in id_list:
+            print('mession%d' % thread_id)
             self.crawl_one(int(song_id), net)
 
 
@@ -198,7 +205,7 @@ def main(user_id):
     logic = Logic(mysql)
     conn = mysql.conn()
     cursor = conn.cursor()
-    sql = 'select song_id from playlist_7777'
+    sql = 'select song_id from playlist_78443113'
     cursor.execute(sql)
     song_id_list = cursor.fetchall()
     for a in range(10):
