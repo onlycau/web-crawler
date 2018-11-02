@@ -118,4 +118,4 @@ net.handle_page(39002, page)
 page = Net().get_page(39002,proxies)
 soup = BeautifulSoup(page, 'lxml')
 body = soup.find_all(attrs={'id': 'fan_count'})
-print(body[0].text)'''
+print(body[0].t'''
